@@ -26,3 +26,4 @@ food_dict = response.json()["foods"][0]
 for key, value in food_dict.items():
     print("----------------------------------------")
     print(key, ":", value)
+# for gui
