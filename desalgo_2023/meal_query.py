@@ -14,16 +14,37 @@ headers = {
     "x-remote-user-id": "0",
 }
 
-query_content = input("Enter Meal: ")
 
-query = {"query": query_content}
+def search_meal(query_content, meals):
+    query = {"query": query_content}
 
+    response = requests.request("POST", url, headers=headers, data=query)
+    food_dict = response.json()["foods"][0]
 
-response = requests.request("POST", url, headers=headers, data=query)
-food_dict = response.json()["foods"][0]
+    name = food_dict["food_name"]
+    grams = int(food_dict["serving_weight_grams"])
+    calories = int(food_dict["nf_calories"])
+    sugar = 0 if food_dict["nf_sugars"] is None else int(food_dict["nf_sugars"])
+    saturated_fat = int(food_dict["nf_saturated_fat"])
+    sodium = int(food_dict["nf_sodium"])
+    fiber = (
+        0
+        if food_dict["nf_dietary_fiber"] is None
+        else int(food_dict["nf_dietary_fiber"])
+    )
+    protein = int(food_dict["nf_protein"])
 
+    meals[name] = [
+        {"grams": grams},
+        {"calories": calories},
+        {"sugar": sugar},
+        {"saturated_fat": saturated_fat},
+        {"sodium": sodium},
+        {"fiber": fiber},
+        {"protein": protein},
+    ]
 
-for key, value in food_dict.items():
-    print("----------------------------------------")
-    print(key, ":", value)
-# for gui
+    return meals
+    # for key, value in food_dict.items():
+    #     print("----------------------------------------")
+    #     print(key, ":", value)
