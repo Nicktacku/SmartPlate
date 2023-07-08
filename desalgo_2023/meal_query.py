@@ -23,6 +23,7 @@ def search_meal(query_content, meals):
 
     name = food_dict["food_name"]
     grams = int(food_dict["serving_weight_grams"])
+
     calories = int(food_dict["nf_calories"])
     sugar = 0 if food_dict["nf_sugars"] is None else int(food_dict["nf_sugars"])
     saturated_fat = int(food_dict["nf_saturated_fat"])
@@ -34,15 +35,15 @@ def search_meal(query_content, meals):
     )
     protein = int(food_dict["nf_protein"])
 
-    meals[name] = [
-        {"grams": grams},
-        {"calories": calories},
-        {"sugar": sugar},
-        {"saturated_fat": saturated_fat},
-        {"sodium": sodium},
-        {"fiber": fiber},
-        {"protein": protein},
-    ]
+    meals[name] = {
+        "grams": grams,
+        "calories": calories,
+        "sugar": sugar,
+        "saturated_fat": saturated_fat,
+        "sodium": sodium,
+        "fiber": fiber,
+        "protein": protein,
+    }
 
     return meals
     # for key, value in food_dict.items():

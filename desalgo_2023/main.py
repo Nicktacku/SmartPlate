@@ -3,8 +3,10 @@ from tkinter import messagebox
 from tkinter import ttk
 from PIL import Image, ImageTk
 import meal_query
+import nutritionix
 
 meals = {}
+nutriscores = []
 
 
 def center_window(window):  # to center window
@@ -33,7 +35,6 @@ def open_meal_page():
         # print(meals)
         meal_listbox.insert(tk.END, query)
         query_entry.delete(0, tk.END)
-        print(meals)
 
     def delete_meal():
         selected_index = meal_listbox.curselection()
@@ -120,6 +121,9 @@ def open_meal_page():
 
         def start_optimization():
             progress_bar.start()
+            for i in meals.keys():
+                nutriscores.append(nutritionix.get_nutriscore(meals[i]))
+            print(nutriscores)
 
         # creating the start button (for optimization)
         start_button = tk.Button(
@@ -226,13 +230,13 @@ slogan_label = tk.Label(
 slogan_label.pack(pady=15)
 
 # Load and resize the logo image
-# logo_image = Image.open("D:\SmartPlate GUI\Elements\logo.png")
-# logo_image = logo_image.resize((200, 200), Image.ANTIALIAS)
-# logo_photo = ImageTk.PhotoImage(logo_image)
+logo_image = Image.open("assets/ph_logo.png")
+logo_image = logo_image.resize((200, 200), Image.ANTIALIAS)
+logo_photo = ImageTk.PhotoImage(logo_image)
 
 # Create logo label
-# logo_label = tk.Label(root, image=logo_photo, bg="#d0f0c0")
-# logo_label.pack(pady=10)
+logo_label = tk.Label(root, image=logo_photo, bg="#d0f0c0")
+logo_label.pack(pady=10)
 
 # Create start button
 start_button = tk.Button(

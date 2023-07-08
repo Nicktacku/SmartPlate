@@ -1,11 +1,3 @@
-import requests
-from dotenv import load_dotenv
-import os
-
-
-load_dotenv()
-
-
 def bad_point_compute(bp):
     # conversion of calorie
     if bp[0] <= 335:
@@ -138,35 +130,24 @@ def good_point_compute(gp):
     return gp
 
 
-def nutriscore(nutrients):
+def get_nutriscore(nutrients):
     nutrient_values = []
 
     # convert calorie into 100 g
-    gram = int(nutrients["serving_weight_grams"])
-    nutrient_values.append(gram)
+    nutrient_values.append(nutrients["grams"])
 
     # bad nutrients
-    calorie = int(nutrients["nf_calories"])
-    nutrient_values.append(calorie)
-    sugar = 0 if nutrients["nf_sugars"] is None else int(nutrients["nf_sugars"])
-    nutrient_values.append(sugar)
-    saturated_fat = int(nutrients["nf_saturated_fat"])
-    nutrient_values.append(saturated_fat)
-    sodium = int(nutrients["nf_sodium"])
-    nutrient_values.append(sodium)
+    nutrient_values.append(nutrients["calories"])
+    nutrient_values.append(nutrients["sugar"])
+    nutrient_values.append(nutrients["saturated_fat"])
+    nutrient_values.append(nutrients["sodium"])
 
     # good nutrients
-    fiber = (
-        0
-        if nutrients["nf_dietary_fiber"] is None
-        else int(nutrients["nf_dietary_fiber"])
-    )
-    nutrient_values.append(fiber)
-    protein = int(nutrients["nf_protein"])
-    nutrient_values.append(protein)
+    nutrient_values.append(nutrients["fiber"])
+    nutrient_values.append(nutrients["protein"])
 
-    nutrient_convert_ratio = 100 / gram
-    converted_calorie = (int(calorie * 4.184)) * nutrient_convert_ratio
+    nutrient_convert_ratio = 100 / nutrients["grams"]
+    converted_calorie = (int(nutrients["calories"] * 4.184)) * nutrient_convert_ratio
     nutrient_values[1] = converted_calorie
 
     for i, nutrient in enumerate(nutrient_values[2:]):
@@ -193,24 +174,5 @@ def nutriscore(nutrients):
         print("rating: D")
     elif nutriscore >= 19:
         print("rating: E")
+
     return nutriscore
-
-
-url = "https://trackapi.nutritionix.com/v2/natural/nutrients"
-
-headers = {
-    "Content-Type": "application/x-www-form-urlencoded",
-    "x-app-id": os.getenv("api_id"),
-    "x-app-key": os.getenv("api_key"),
-    "x-remote-user-id": "0",
-}
-
-query_content = input("Enter Meal: ")
-
-query = {"query": query_content}
-
-
-response = requests.request("POST", url, headers=headers, data=query)
-food_dict = response.json()["foods"][0]
-
-print(nutriscore(food_dict))
