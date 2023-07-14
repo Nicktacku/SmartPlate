@@ -4,9 +4,13 @@ from tkinter import ttk
 from PIL import Image, ImageTk
 import meal_query
 import nutritionix
+import fractional_knapsack
 
 meals = {}
 nutriscores = []
+calorie_limit = 0
+optimized_meals = []
+result_data = []
 
 
 def center_window(window):  # to center window
@@ -113,17 +117,21 @@ def open_meal_page():
             bg="#d0f0c0",
             fg="black",
         )
-        progress_label.pack(pady=10)
+        progress_label.pack(pady=50)
 
         # creating the progress bar
         progress_bar = ttk.Progressbar(optimize_page, mode="indeterminate")
-        progress_bar.pack(pady=10)
+        progress_bar.pack(pady=20)
 
         def start_optimization():
+            global optimized_meals
             progress_bar.start()
             for i in meals.keys():
-                nutriscores.append(nutritionix.get_nutriscore(meals[i]))
-            print(nutriscores)
+                meals[i]["nutriscore"] = nutritionix.get_nutriscore(meals[i])
+
+            optimized_meals = fractional_knapsack.calculate(int(calorie_limit), meals)
+
+            optimize_page.after(1000, open_result_page)  # open result page after 10s
 
         # creating the start button (for optimization)
         start_button = tk.Button(
@@ -147,6 +155,101 @@ def open_meal_page():
         )
         cancel_button.pack(pady=10)
 
+        def open_result_page():
+            optimize_page.destroy()
+            result_page = tk.Toplevel(root)
+            result_page.title("Optimization Result")
+            result_page.configure(bg="#d0f0c0")
+            result_page.geometry("800x500")
+            center_window(result_page)
+
+            # Create the header label
+            header_label = tk.Label(
+                result_page,
+                text="Optimized Meal Selections using Fractional Knapsack!",
+                font=("Helvetica", 18),
+                bg="#d0f0c0",
+                fg="black",
+            )
+            header_label.pack(pady=10)
+
+            # Create result frame
+            result_frame = tk.Frame(result_page, bg="#d0f0c0")
+            result_frame.pack(pady=20)
+
+            # Create Treeview with custom style
+            style = ttk.Style()
+            style.configure("Custom.Treeview", background="#eedc82")
+
+            # Create Treeview
+            result_table = ttk.Treeview(
+                result_frame, style="Custom.Treeview", height=10
+            )
+            result_table.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+
+            # Create scrollbar
+            scrollbar = ttk.Scrollbar(
+                result_frame, orient="vertical", command=result_table.yview
+            )
+            scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+            result_table.configure(yscrollcommand=scrollbar.set)
+
+            # Configure Treeview columns
+            result_table["columns"] = (
+                "meal_name",
+                "quantity",
+                "nutriscore",
+                "protein",
+                "carbohydrates",
+                "calorie",
+                "sugar",
+            )
+
+            # Format column headers
+            result_table.heading("meal_name", text="Meal Name")
+            result_table.heading("quantity", text="Quantity")
+            result_table.heading("nutriscore", text="Nutriscore")
+            result_table.heading("protein", text="Protein")
+            result_table.heading("carbohydrates", text="Carbohydrates")
+            result_table.heading("calorie", text="Calorie")
+            result_table.heading("sugar", text="Sugar")
+
+            # Set column widths
+            result_table.column("meal_name", width=150)
+            result_table.column("quantity", width=100)
+            result_table.column("nutriscore", width=100)
+            result_table.column("protein", width=100)
+            result_table.column("carbohydrates", width=120)
+            result_table.column("calorie", width=100)
+            result_table.column("sugar", width=100)
+
+            for i in optimized_meals:
+                print("hello")
+                meal = i
+                quantity = meals[i]["quantity"]
+                nutriscore = nutritionix.nutriscore_conversion(meals[i]["nutriscore"])
+                protein = meals[i]["protein"]
+                carbohydrates = meals[i]["carbohydrates"]
+                calorie = meals[i]["calories"]
+                sugar = meals[i]["sugar"]
+
+                result_data.append(
+                    (
+                        meal,
+                        quantity,
+                        nutriscore,
+                        protein,
+                        carbohydrates,
+                        calorie,
+                        sugar,
+                    )
+                )
+            print("optimized display", optimized_meals)
+
+            # insertion of temporary data into Treeview
+            for data in result_data:
+                result_table.insert("", tk.END, values=data)
+
     # creating the optimize button in the open_meal_page
     optimize_button = tk.Button(
         meal_frame,
@@ -168,6 +271,9 @@ def open_calorie_page():
     center_window(calorie_page)
 
     def calculate_meal_plan():
+        global calorie_limit
+        print(nutriscore_var.get())
+        print(carbohydrates_var.get())
         calorie_limit = calorie_entry.get()
         # eto yung variable once gagamitin na yung calorie limit for the computation
 
@@ -187,6 +293,66 @@ def open_calorie_page():
     # creating the calorie entry field
     calorie_entry = tk.Entry(calorie_page, font=("Helvetica", 16))
     calorie_entry.pack(pady=5)
+
+    # Adding the label for checkbox options
+    options_label = tk.Label(
+        calorie_page,
+        text="Choose the values you wish to include in the output:",
+        font=("Helvetica", 18),
+        bg="#d0f0c0",
+        fg="black",
+    )
+    options_label.pack(pady=10, anchor="w")
+
+    # Creating the checkbox options
+    nutriscore_var = tk.IntVar()
+    carbohydrates_var = tk.IntVar()
+    protein_var = tk.IntVar()
+    sugar_var = tk.IntVar()
+
+    nutriscore_checkbox = tk.Checkbutton(
+        calorie_page,
+        text="Nutriscore",
+        variable=nutriscore_var,
+        font=("Helvetica", 12),
+        bg="#d0f0c0",
+        fg="black",
+        anchor="w",
+    )
+    nutriscore_checkbox.pack(pady=5, anchor="w")
+
+    carbohydrates_checkbox = tk.Checkbutton(
+        calorie_page,
+        text="Carbohydrates",
+        variable=carbohydrates_var,
+        font=("Helvetica", 12),
+        bg="#d0f0c0",
+        fg="black",
+        anchor="w",
+    )
+    carbohydrates_checkbox.pack(pady=5, anchor="w")
+
+    protein_checkbox = tk.Checkbutton(
+        calorie_page,
+        text="Protein",
+        variable=protein_var,
+        font=("Helvetica", 12),
+        bg="#d0f0c0",
+        fg="black",
+        anchor="w",
+    )
+    protein_checkbox.pack(pady=5, anchor="w")
+
+    sugar_checkbox = tk.Checkbutton(
+        calorie_page,
+        text="Sugar",
+        variable=sugar_var,
+        font=("Helvetica", 12),
+        bg="#d0f0c0",
+        fg="black",
+        anchor="w",
+    )
+    sugar_checkbox.pack(pady=5, anchor="w")
 
     # creating the proceed button
     calculate_button = tk.Button(

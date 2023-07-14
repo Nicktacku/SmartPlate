@@ -22,6 +22,7 @@ def search_meal(query_content, meals):
     food_dict = response.json()["foods"][0]
 
     name = food_dict["food_name"]
+    quantity = food_dict["serving_qty"]
     grams = int(food_dict["serving_weight_grams"])
 
     calories = int(food_dict["nf_calories"])
@@ -35,6 +36,9 @@ def search_meal(query_content, meals):
     )
     protein = int(food_dict["nf_protein"])
 
+    carbohydrates = food_dict["nf_total_carbohydrate"]
+
+    # print(food_dict)
     meals[name] = {
         "grams": grams,
         "calories": calories,
@@ -43,9 +47,11 @@ def search_meal(query_content, meals):
         "sodium": sodium,
         "fiber": fiber,
         "protein": protein,
+        "quantity": quantity,
+        "carbohydrates": carbohydrates,
     }
 
     return meals
-    # for key, value in food_dict.items():
-    #     print("----------------------------------------")
-    #     print(key, ":", value)
+
+
+# print(search_meal("cake", []))
