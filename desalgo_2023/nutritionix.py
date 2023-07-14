@@ -1,3 +1,16 @@
+def nutriscore_conversion(nutriscore):
+    if nutriscore < 0:
+        return "A"
+    elif nutriscore >= 0 and nutriscore <= 2:
+        return "B"
+    elif nutriscore >= 3 and nutriscore <= 10:
+        return "C"
+    elif nutriscore >= 11 and nutriscore <= 18:
+        return "D"
+    elif nutriscore >= 19:
+        return "E"
+
+
 def bad_point_compute(bp):
     # conversion of calorie
     if bp[0] <= 335:
@@ -162,17 +175,5 @@ def get_nutriscore(nutrients):
         nutriscore = bad_points - good_points[0]
     elif bad_points < 11:
         nutriscore = bad_points - sum(good_points)
-
-    # letter conversion
-    if nutriscore < 0:
-        print("rating: A")
-    elif nutriscore >= 0 and nutriscore <= 2:
-        print("rating: B")
-    elif nutriscore >= 3 and nutriscore <= 10:
-        print("rating: C")
-    elif nutriscore >= 11 and nutriscore <= 18:
-        print("rating: D")
-    elif nutriscore >= 19:
-        print("rating: E")
 
     return nutriscore
