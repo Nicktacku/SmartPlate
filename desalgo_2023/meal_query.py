@@ -38,6 +38,8 @@ def search_meal(query_content, meals):
 
     carbohydrates = food_dict["nf_total_carbohydrate"]
 
+    cholesterol = food_dict["nf_cholesterol"]
+
     # print(food_dict)
     meals[name] = {
         "grams": grams,
@@ -49,9 +51,7 @@ def search_meal(query_content, meals):
         "protein": protein,
         "quantity": quantity,
         "carbohydrates": carbohydrates,
+        "cholesterol": cholesterol,
     }
 
     return meals
-
-
-# print(search_meal("cake", []))
