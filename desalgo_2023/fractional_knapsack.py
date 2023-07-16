@@ -21,7 +21,7 @@ def calculate(limit, meals):
                 limit, meals[key]["calories"]
             )
             print("ratio", fractional_ratio)
-            recommended = (1 - abs(fractional_ratio)) * 100
+            recommended = 1 - abs(fractional_ratio)
             food_to_fit = i
             break
 

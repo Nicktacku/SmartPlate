@@ -36,12 +36,17 @@ def open_meal_page():
     def add_meal(event=None):
         query = query_entry.get()
         result = meal_query.search_meal(query, meals)
+        meals[query]["nutriscore"] = nutritionix.get_nutriscore(meals[query])
 
         if result is None:
             messagebox.showerror("ERROR", "Please enter a valid meal.")
             return
 
-        meal_treeview.insert("", tk.END, values=(query))
+        meal_treeview.insert(
+            "",
+            tk.END,
+            values=(query, meals[query]["nutriscore"], meals[query]["calories"]),
+        )
         query_entry.delete(0, tk.END)
 
     def delete_meal():
@@ -160,8 +165,6 @@ def open_meal_page():
         def start_optimization():
             global knapsack_result
             progress_bar.start()
-            for i in meals.keys():
-                meals[i]["nutriscore"] = nutritionix.get_nutriscore(meals[i])
 
             knapsack_result = fractional_knapsack.calculate(int(calorie_limit), meals)
 
@@ -318,7 +321,7 @@ def open_result_page():
     # Create a label for the note/recommendation section
     note_label = tk.Label(
         result_page,
-        text=f"You can reduce {knapsack_result[1]} percent of {knapsack_result[2]} if you want to include it",
+        text=f"Tip: You can reduce the weight of {knapsack_result[2]} by {knapsack_result[1] * meals[knapsack_result[2]]['grams']} grams if you want to include it",
         font=("Helvetica", 12),
         bg="#eedc82",
         fg="black",
@@ -501,7 +504,7 @@ slogan_label.pack(pady=15)
 
 # Load and resize the logo image
 logo_image = Image.open("assets/logo2.png")
-logo_image = logo_image.resize((200, 200), Image.ANTIALIAS)
+logo_image = logo_image.resize((300, 300), Image.ANTIALIAS)
 logo_photo = ImageTk.PhotoImage(logo_image)
 
 # Create logo label
