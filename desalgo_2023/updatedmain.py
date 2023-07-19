@@ -166,9 +166,7 @@ def open_meal_page():
             global knapsack_result
             progress_bar.start()
 
-            knapsack_result = fractional_knapsack.calculate(
-                int(calorie_limit), meals, "nutriscore"
-            )
+            knapsack_result = fractional_knapsack.calculate(int(calorie_limit), meals)
 
             # open result page after 3s
             optimize_page.after(3000, open_result_page)
@@ -323,7 +321,7 @@ def open_result_page():
     # Create a label for the note/recommendation section
     note_label = tk.Label(
         result_page,
-        text=f"Tip: You can reduce the weight of {knapsack_result[2]} by {int(knapsack_result[1] * meals[knapsack_result[2]]['grams'])} grams if you want to include it",
+        text=f"Tip: You can reduce the calories of {knapsack_result[2]} by {knapsack_result[1] * meals[knapsack_result[2]]['calories']} if you want to include it",
         font=("Helvetica", 12),
         bg="#eedc82",
         fg="black",

@@ -1,11 +1,12 @@
-def calculate(limit, meals):
+def calculate(limit, meals, type):
     ratio = {}
     knapsack = []
     recommended = None
     food_to_fit = None
 
+    # type should be string of the profit (example "nutriscore" or "sugar")
     for key in meals:
-        ratio[key] = meals[key]["nutriscore"] * meals[key]["calories"]
+        ratio[key] = meals[key][type] * meals[key]["calories"]
 
     sorted_ratio = dict(sorted(ratio.items(), key=lambda x: x[1]))
     print(sorted_ratio.keys())
