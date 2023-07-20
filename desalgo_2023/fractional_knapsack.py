@@ -1,7 +1,7 @@
 def calculate(limit, meals, type):
     ratio = {}
     knapsack = []
-    recommended = None
+    recommended = 0
     food_to_fit = None
 
     # type should be string of the profit (example "nutriscore" or "sugar")
@@ -12,8 +12,8 @@ def calculate(limit, meals, type):
     print(sorted_ratio.keys())
 
     for i in sorted_ratio.keys():
-        print("sorted: ", sorted_ratio[i])
-        limit -= int(sorted_ratio[i])
+        print("sorted: ", meals[i]["calories"])
+        limit -= int(meals[i]["calories"])
 
         if limit == 0:
             break

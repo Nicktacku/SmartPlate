@@ -37,6 +37,7 @@ def open_meal_page():
         query = query_entry.get()
         result = meal_query.search_meal(query, meals)
         meals[query]["nutriscore"] = nutritionix.get_nutriscore(meals[query])
+        print(meals)
 
         if result is None:
             messagebox.showerror("ERROR", "Please enter a valid meal.")
@@ -320,10 +321,15 @@ def open_result_page():
         result_page.destroy()
         open_meal_page()
 
+    recommendation = ""
+    if knapsack_result[2] is None:
+        recommendation = "Happy Eating!"
+    else:
+        recommendation = f"Tip: You can reduce the weight of {knapsack_result[2]} by {int(knapsack_result[1] * meals[knapsack_result[2]]['grams'])} grams if you want to include it"
     # Create a label for the note/recommendation section
     note_label = tk.Label(
         result_page,
-        text=f"Tip: You can reduce the weight of {knapsack_result[2]} by {int(knapsack_result[1] * meals[knapsack_result[2]]['grams'])} grams if you want to include it",
+        text=recommendation,
         font=("Helvetica", 12),
         bg="#eedc82",
         fg="black",
