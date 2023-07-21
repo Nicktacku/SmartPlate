@@ -24,6 +24,7 @@ def center_window(window):  # to center window
 
 def open_meal_page():
     root.withdraw()
+    meals.clear()
     meal_page = tk.Toplevel(root)
     meal_page.title("Meal Selection")
     meal_page.configure(bg="#d0f0c0")
@@ -282,6 +283,7 @@ def open_result_page():
         sugar = meals[included_meal]["sugar"]
         cholesterol = meals[included_meal]["cholesterol"]
 
+        result_data.clear()
         result_data.append(
             (
                 meal,
@@ -319,6 +321,7 @@ def open_result_page():
     # Create a button to go back to the open_meal_page
     def go_back():
         result_page.destroy()
+        meals.clear()
         open_meal_page()
 
     recommendation = ""
@@ -349,6 +352,7 @@ def open_result_page():
 
 def open_calorie_page():
     root.withdraw()
+    meals.clear()
     calorie_page = tk.Toplevel(root)
     calorie_page.title("Calorie Limit")
     calorie_page.configure(bg="#d0f0c0")
