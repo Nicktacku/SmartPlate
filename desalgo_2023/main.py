@@ -3,7 +3,7 @@ from tkinter import messagebox
 from tkinter import ttk
 from PIL import Image, ImageTk
 import meal_query
-import nutritionix
+import nutriscore
 import fractional_knapsack
 
 meals = {}
@@ -22,6 +22,13 @@ def center_window(window):  # to center window
     window.geometry(f"{width}x{height}+{x}+{y}")
 
 
+def cancel_optimization():
+    global optimize_page
+    meals.clear()
+    optimize_page.destroy()
+    open_meal_page()
+
+
 def open_meal_page():
     root.withdraw()
     meals.clear()
@@ -30,14 +37,19 @@ def open_meal_page():
     meal_page.configure(bg="#d0f0c0")
     meal_page.geometry("800x500")
     center_window(meal_page)
+    guide_page = None
 
     meal_frame = tk.Frame(meal_page, bg="#d0f0c0")
     meal_frame.pack(padx=20, pady=20, fill=tk.BOTH, expand=True)
 
+    def back_to_calorie_page():
+        meal_page.destroy()
+        open_calorie_page()
+
     def add_meal(event=None):
         query = query_entry.get()
         result = meal_query.search_meal(query, meals)
-        meals[query]["nutriscore"] = nutritionix.get_nutriscore(meals[query])
+        meals[query]["nutriscore"] = nutriscore.calculate(meals[query])
         print(meals)
 
         if result is None:
@@ -56,6 +68,37 @@ def open_meal_page():
         meals.pop(meal_treeview.item(selected_item)["values"][0])
         if selected_item:
             meal_treeview.delete(selected_item)
+
+    def open_nutriscore_guide():
+        guide_page = tk.Toplevel(meal_page)
+        guide_page.title("Nutriscore Guide")
+        guide_page.configure(bg="#d0f0c0")
+        guide_page.geometry("600x400")
+        center_window(guide_page)
+
+        nutriscore_values = [
+            ("A", "Points Solid Food: -15 to 1, Points Beverages: Water", "#9ab973"),
+            ("B", "Points Solid Food: 0-2, Points Beverages: <= 1 ", "#c2d99d"),
+            ("C", "Points Solid Food: 3-10, Points Beverages: 2-5", "#eedc82"),
+            ("D", "Points Solid Food: 11-18, Points Beverages: 6-9", "#f7af72"),
+            ("E", "Points Solid Food: 19-40, Points Beverages: 10-40", "#f15f5f"),
+        ]
+
+        def create_nutriscore_label(frame, text, tooltip, color):
+            label_frame = tk.Frame(frame, bg=color, bd=1, relief="solid")
+            label_frame.pack(pady=5, padx=5, fill=tk.X)
+            label = tk.Label(label_frame, text=text, font=("Helvetica", 12), bg=color)
+            label.pack(side=tk.LEFT, padx=5, pady=5)
+            label.bind("<Enter>", lambda event: tooltip_label.config(text=tooltip))
+            label.bind("<Leave>", lambda event: tooltip_label.config(text=""))
+
+        for value, tooltip, color in nutriscore_values:
+            create_nutriscore_label(guide_page, f"Nutriscore: {value}", tooltip, color)
+
+        tooltip_label = tk.Label(
+            guide_page, text="", font=("Helvetica", 12), bg="#d0f0c0"
+        )
+        tooltip_label.pack(pady=5)
 
     query_label = tk.Label(
         meal_frame,
@@ -126,13 +169,23 @@ def open_meal_page():
     )
     delete_button.pack(side=tk.LEFT, pady=10, padx=5)
 
+    help_button = tk.Button(
+        meal_frame,
+        text="Help",
+        font=("Helvetica", 14),
+        bg="#9ab973",
+        fg="black",
+        command=open_nutriscore_guide,
+    )
+    help_button.pack(side=tk.RIGHT, pady=10, padx=5)
+
     back_button = tk.Button(
         meal_frame,
         text="Back",
         font=("Helvetica", 14),
         bg="#9ab973",
         fg="black",
-        command=open_calorie_page,
+        command=back_to_calorie_page,
     )
     back_button.pack(side=tk.RIGHT, pady=10, padx=5)
 
@@ -169,7 +222,7 @@ def open_meal_page():
             progress_bar.start()
 
             knapsack_result = fractional_knapsack.calculate(
-                int(calorie_limit), meals, "nutriscore"
+                int(calorie_limit), meals, selected_option_value
             )
 
             # open result page after 3s
@@ -193,7 +246,7 @@ def open_meal_page():
             font=("Helvetica", 18),
             bg="#9ab973",
             fg="black",
-            command=open_meal_page,
+            command=cancel_optimization,
         )
         cancel_button.pack(pady=10)
 
@@ -274,7 +327,7 @@ def open_result_page():
     for included_meal in knapsack_result[0]:
         meal = included_meal
         quantity = meals[included_meal]["quantity"]
-        nutriscore = nutritionix.nutriscore_conversion(
+        nutriscore_value = nutriscore.nutriscore_conversion(
             meals[included_meal]["nutriscore"]
         )
         protein = meals[included_meal]["protein"]
@@ -284,11 +337,12 @@ def open_result_page():
         cholesterol = meals[included_meal]["cholesterol"]
 
         result_data.clear()
+        print("result data", result_data)
         result_data.append(
             (
                 meal,
                 quantity,
-                nutriscore,
+                nutriscore_value,
                 protein,
                 carbohydrates,
                 calorie,
@@ -322,6 +376,7 @@ def open_result_page():
     def go_back():
         result_page.destroy()
         meals.clear()
+        result_data.clear()
         open_meal_page()
 
     recommendation = ""
@@ -359,32 +414,22 @@ def open_calorie_page():
     calorie_page.geometry("800x500")
     center_window(calorie_page)
 
+    selected_option = tk.StringVar()  # To store the selected radiobutton value
+
     def calculate_meal_plan():
         global calorie_limit
-        print(nutriscore_var.get())
-        print(carbohydrates_var.get())
+        global selected_option_value
         calorie_limit = calorie_entry.get()
+        selected_option_value = selected_option.get()
 
-        calorie_page.destroy()  # Destroy the calorie page before opening the meal page
-        open_meal_page()
-
-    def validate_entry():
-        calorie_limit = calorie_entry.get()
-        checkbox_selected = (
-            nutriscore_var.get()
-            or carbohydrates_var.get()
-            or protein_var.get()
-            or sugar_var.get()
-            or cholesterol_var.get()
-        )
-        if not checkbox_selected:
-            messagebox.showerror("Error", "Please select at least one checkbox.")
-        elif not calorie_limit.isdigit():
+        if not calorie_limit.isdigit():
             messagebox.showerror("Error", "Please enter a valid calorie limit.")
+        elif not selected_option_value:
+            messagebox.showerror("Error", "Please select one option to optimize.")
         else:
-            calculate_meal_plan()
+            calorie_page.destroy()
+            open_meal_page()
 
-    # creating calorie entry label
     calorie_label = tk.Label(
         calorie_page,
         text="Enter Calorie Limit:",
@@ -394,93 +439,49 @@ def open_calorie_page():
     )
     calorie_label.pack(pady=10)
 
-    # creating the calorie entry field
     calorie_entry = tk.Entry(calorie_page, font=("Helvetica", 16))
     calorie_entry.pack(pady=5)
 
-    # Adding the label for checkbox options
     options_label = tk.Label(
         calorie_page,
-        text="Choose the values you wish to include in the output:",
+        text="Choose the values you wish to optimize:",
         font=("Helvetica", 18, "bold"),
         bg="#d0f0c0",
         fg="black",
     )
     options_label.pack(pady=10, anchor="w")
 
-    # Creating the checkbox options
-    nutriscore_var = tk.IntVar()
-    carbohydrates_var = tk.IntVar()
-    protein_var = tk.IntVar()
-    sugar_var = tk.IntVar()
-    cholesterol_var = tk.IntVar()
-
-    nutriscore_checkbox = tk.Checkbutton(
+    nutriscore_radiobutton = tk.Radiobutton(
         calorie_page,
         text="Nutriscore",
-        variable=nutriscore_var,
+        variable=selected_option,
+        value="nutriscore",
         font=("Helvetica", 12),
         bg="#d0f0c0",
         fg="black",
         anchor="w",
     )
-    nutriscore_checkbox.pack(pady=5, anchor="w")
+    nutriscore_radiobutton.pack(pady=5, anchor="w")
 
-    carbohydrates_checkbox = tk.Checkbutton(
-        calorie_page,
-        text="Carbohydrates",
-        variable=carbohydrates_var,
-        font=("Helvetica", 12),
-        bg="#d0f0c0",
-        fg="black",
-        anchor="w",
-    )
-    carbohydrates_checkbox.pack(pady=5, anchor="w")
-
-    protein_checkbox = tk.Checkbutton(
-        calorie_page,
-        text="Protein",
-        variable=protein_var,
-        font=("Helvetica", 12),
-        bg="#d0f0c0",
-        fg="black",
-        anchor="w",
-    )
-    protein_checkbox.pack(pady=5, anchor="w")
-
-    sugar_checkbox = tk.Checkbutton(
+    sugar_radiobutton = tk.Radiobutton(
         calorie_page,
         text="Sugar",
-        variable=sugar_var,
+        variable=selected_option,
+        value="sugar",
         font=("Helvetica", 12),
         bg="#d0f0c0",
         fg="black",
         anchor="w",
     )
-    sugar_checkbox.pack(pady=5, anchor="w")
+    sugar_radiobutton.pack(pady=5, anchor="w")
 
-    cholesterol_checkbox = tk.Checkbutton(
-        calorie_page,
-        text="Cholesterol",
-        variable=cholesterol_var,
-        font=("Helvetica", 12),
-        bg="#d0f0c0",
-        fg="black",
-        anchor="w",
-    )
-    cholesterol_checkbox.pack(pady=5, anchor="w")
-
-    # creating the proceed button
     calculate_button = tk.Button(
         calorie_page,
         text="Proceed",
-        font=(
-            "Helvetica",
-            18,
-        ),
+        font=("Helvetica", 18),
         bg="#9ab973",
         fg="black",
-        command=validate_entry,
+        command=calculate_meal_plan,
     )
     calculate_button.pack(pady=10)
 
@@ -515,9 +516,10 @@ slogan_label = tk.Label(
 slogan_label.pack(pady=15)
 
 # Load and resize the logo image
-logo_image = Image.open("assets/logo2.png")
-logo_image = logo_image.resize((300, 300), Image.ANTIALIAS)
+logo_image = Image.open("logo2.png")
+logo_image = logo_image.resize((200, 200), Image.ANTIALIAS)
 logo_photo = ImageTk.PhotoImage(logo_image)
+root.iconphoto(False, logo_photo)
 
 # Create logo label
 logo_label = tk.Label(root, image=logo_photo, bg="#d0f0c0")
