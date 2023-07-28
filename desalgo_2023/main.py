@@ -50,7 +50,6 @@ def open_meal_page():
         query = query_entry.get()
         result = meal_query.search_meal(query, meals)
         meals[query]["nutriscore"] = nutriscore.calculate(meals[query])
-        print(meals)
 
         if result is None:
             messagebox.showerror("ERROR", "Please enter a valid meal.")
@@ -102,7 +101,7 @@ def open_meal_page():
 
     query_label = tk.Label(
         meal_frame,
-        text="Query:",
+        text="Meal Name:",
         font=("Helvetica", 14, "bold"),
         bg="#d0f0c0",
         fg="black",
@@ -225,8 +224,8 @@ def open_meal_page():
                 int(calorie_limit), meals, selected_option_value
             )
 
-            # open result page after 3s
-            optimize_page.after(3000, open_result_page)
+            # open result page after 2s
+            optimize_page.after(2000, open_result_page)
 
         # creating the start button (for optimization)
         start_button = tk.Button(
@@ -336,8 +335,6 @@ def open_result_page():
         sugar = meals[included_meal]["sugar"]
         cholesterol = meals[included_meal]["cholesterol"]
 
-        result_data.clear()
-        print("result data", result_data)
         result_data.append(
             (
                 meal,
@@ -351,9 +348,10 @@ def open_result_page():
             )
         )
 
-    # insertion of temporary data into Treeview
+    # insertion of data into Treeview
     for data in result_data:
         result_table.insert("", tk.END, values=data)
+    result_data.clear()
 
     # Create scrollbar for y-axis
     scrollbar_y = ttk.Scrollbar(
@@ -380,10 +378,12 @@ def open_result_page():
         open_meal_page()
 
     recommendation = ""
-    if knapsack_result[2] is None:
+    if knapsack_result[2] is None or int(knapsack_result[1]) >= int(
+        meals[knapsack_result[2]]["grams"]
+    ):
         recommendation = "Happy Eating!"
     else:
-        recommendation = f"Tip: You can reduce the weight of {knapsack_result[2]} by {int(knapsack_result[1] * meals[knapsack_result[2]]['grams'])} grams if you want to include it"
+        recommendation = f"Tip: You can reduce the weight of {knapsack_result[2]} by {knapsack_result[1]: .2f} grams if you want to include it"
     # Create a label for the note/recommendation section
     note_label = tk.Label(
         result_page,
@@ -511,7 +511,11 @@ header_label.pack(pady=30)
 
 # Create slogan label
 slogan_label = tk.Label(
-    root, text="Optimize your meals!", font=slogan_font, bg="#d0f0c0", fg="black"
+    root,
+    text="Wholesome bites, made smarter!",
+    font=slogan_font,
+    bg="#d0f0c0",
+    fg="black",
 )
 slogan_label.pack(pady=15)
 
@@ -519,7 +523,7 @@ slogan_label.pack(pady=15)
 logo_image = Image.open("logo2.png")
 logo_image = logo_image.resize((200, 200), Image.ANTIALIAS)
 logo_photo = ImageTk.PhotoImage(logo_image)
-root.iconphoto(False, logo_photo)
+root.iconbitmap("logo2.ico")
 
 # Create logo label
 logo_label = tk.Label(root, image=logo_photo, bg="#d0f0c0")
